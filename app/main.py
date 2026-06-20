@@ -8,12 +8,8 @@ from app.routers import notifications
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    Runs on startup and shutdown.
-    Created tables on startup - in prod use Alembic migrations.
-    """
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+   
+    # Alembic handles schema
     yield
     # shutdown - close connections
     await engine.dispose()

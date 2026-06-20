@@ -1,5 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select, func, update
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, status, Query
+from sqlalchemy import select, func, update, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timezone
 from app.database import get_db
@@ -35,18 +37,70 @@ async def create_notification(
 async def list_notification(
     user_id: int = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
-    skip: int = 0,
-    limit: int = 20
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=20, ge=1, le=100),
+    unread_only: bool = Query(default=False),
+    notification_type: Optional[str] = Query(default=None)
 ):
-    """List notification for the authenticated user."""
-    result = await db.execute(
+    """
+    List notification for the authenticated user.
+    Supports filtering by read status and type
+    """
+    query = (
         select(Notification)
         .where(Notification.user_id == user_id)
         .order_by(Notification.created_at.desc())
         .offset(skip)
         .limit(limit)
     )
+    # add optional filters
+    if unread_only:
+        query = query.where(not Notification.is_read)
+    
+    if notification_type:
+        query = query.where(Notification.notification_type == notification_type)
+    
+    result = await db.execute(query)
     return result.scalars().all()
+
+
+@router.get('/unread-count', response_model=UnreadCountResponse)
+async def unread_count(
+    user_id: int = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get count of unread notification for the authenticated user."""
+    result = await db.execute(
+        select(func.count(Notification.id))
+        .where(
+            Notification.user_id == user_id,
+            not Notification.is_read
+        )
+    )
+    count = result.scalar()
+    return UnreadCountResponse(count=count, user_id=user_id)
+
+
+@router.get('/notification_id', response_model=NotificationResponse)
+async def get_notification(
+    notification_id: int,
+    user_id: int = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(
+        select(Notification).where(
+            Notification.id == notification_id,
+            Notification.user_id == user_id
+        )
+    )
+    notification = result.scalar_one_or_none()
+
+    if not notification:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Notification not found'
+        )
+    return notification
 
 
 @router.patch('/{notification_id}/read', response_model=NotificationResponse)
@@ -77,18 +131,47 @@ async def mark_as_read(
     return notification
 
 
-@router.get('/unread-count', response_model=UnreadCountResponse)
-async def unread_count(
+@router.patch('/mark-all-read', response_model=dict)
+async def mark_all_read(
     user_id: int = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db)
 ):
-    """Get count of unread notification for the authenticated user."""
+    """
+    Bulk update - mark all unread notifications as read.
+    Uses UPDATE directly instead of fetching each row.
+    """
     result = await db.execute(
-        select(func.count(Notification.id))
+        update(Notification)
         .where(
             Notification.user_id == user_id,
             not Notification.is_read
         )
+        .values(
+            is_read=True,
+            read_at=datetime.now(timezone.utc)
+        )
     )
-    count = result.scalar()
-    return UnreadCountResponse(count=count, user_id=user_id)
+    return {'updated': result.rowcount}
+
+
+@router.delete('/{notification_id}', status_code=204)
+async def delete_notification(
+    notification_id: int,
+    user_id: int = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(
+        select(Notification)
+        .where(
+            Notification.id == notification_id,
+            Notification.user_id == user_id
+        )
+    )
+    notification = result.scalar_one_or_none()
+
+    if not notification:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Notification not found'
+        )
+    await db.delete(notification)

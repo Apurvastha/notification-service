@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Any
 
 
 class NotificationCreate(BaseModel):
@@ -9,6 +9,7 @@ class NotificationCreate(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     message: str = Field(min_length=1)
     notification_type: str = Field(default='info')
+    extra_data: Optional[dict[str, Any]] = None
 
 
 class NotificationResponse(BaseModel):
@@ -21,6 +22,7 @@ class NotificationResponse(BaseModel):
     is_read: bool
     created_at: datetime
     read_at: Optional[datetime] = None
+    extra_data: Optional[dict[str, Any]] = None
 
     model_config = {'from_attributes': True}
     # from_attibutes=true lets pydantic read from SQLAlchemy model instance

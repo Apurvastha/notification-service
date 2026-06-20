@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import String, Integer, Boolean, DateTime, ForeignKey, Text
+from sqlalchemy import String, Integer, Boolean, DateTime, ForeignKey, Text, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from app.database import Base
@@ -27,3 +27,4 @@ class Notification(Base):
         DateTime(timezone=True),
         nullable=True
     )
+    extra_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)
