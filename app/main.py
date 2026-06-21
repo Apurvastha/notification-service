@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from app.config import settings
 from app.database import engine, Base
 from app.routers import notifications
+from app.routers import auth
 
 
 @asynccontextmanager
@@ -29,6 +30,7 @@ app.add_middleware(
     allow_headers=['*']
 )
 
+app.include_router(auth.router)
 app.include_router(notifications.router)
 
 @app.get('/health')
