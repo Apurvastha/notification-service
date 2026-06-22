@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     # app
     APP_NAME: str = 'Notification Service'
     DEBUG: bool = False
+    LOG_LEVEL: str = 'INFO'
 
     class Config:
         env_file = '.env'

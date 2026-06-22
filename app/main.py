@@ -2,9 +2,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.config import settings
-from app.database import engine, Base
-from app.routers import notifications
-from app.routers import auth
+from app.database import engine
+from app.routers import notifications, auth
+from app.middleware import RequestLoggingMiddleware, AuditMiddleware
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(name)s %(message)s',
+    )
+
+
 
 
 @asynccontextmanager
@@ -23,16 +31,21 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+
+# middleware runs in reverse order — CORSMiddleware wraps everything
+app.add_middleware(AuditMiddleware)
+app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=['*'],
     allow_methods=['*'],
-    allow_headers=['*']
+    allow_headers=['*'],
 )
+
 
 app.include_router(auth.router)
 app.include_router(notifications.router)
 
 @app.get('/health')
 async def health():
-    return {'status': 'ok'}
+    return {'status': 'ok', 'service': settings.APP_NAME}

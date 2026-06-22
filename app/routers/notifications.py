@@ -1,10 +1,11 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlalchemy import select, func, update, and_, or_
+from fastapi import APIRouter, Depends, HTTPException, status, Query, BackgroundTasks
+from sqlalchemy import select, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timezone
 from app.database import get_db
+from typing import Optional
 from app.models import Notification
 from app.schemas import (
     NotificationCreate,
@@ -14,6 +15,13 @@ from app.schemas import (
 
 
 from app.dependencies import get_current_user_id
+from app.tasks import (
+    log_notification_created,
+    log_notification_read,
+    simulate_push_notification
+)
+
+
 
 router = APIRouter(
     prefix='/notifications',
@@ -23,13 +31,32 @@ router = APIRouter(
 @router.post('/', response_model=NotificationResponse, status_code=201)
 async def create_notification(
     payload: NotificationCreate,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db)
 ):
-    """Create a new notification for a user."""
+    """
+    Create a new notification for a user.
+    Response is sent immediately - push notification fires in background.
+    """
     notification = Notification(**payload.model_dump())
     db.add(notification)
     await db.flush() # assign ID without committing
     await db.refresh(notification) # loads DB-generated values
+
+    # these run after the response is sent
+    background_tasks.add_task(
+        log_notification_created,
+        notification_id=notification.id,
+        user_id=notification.user_id,
+        title=notification.title
+    )
+    background_tasks.add_task(
+        simulate_push_notification,
+        user_id=notification.user_id,
+        title=notification.title,
+        message=notification.message
+    )
+
     return notification
 
 
@@ -106,6 +133,7 @@ async def get_notification(
 @router.patch('/{notification_id}/read', response_model=NotificationResponse)
 async def mark_as_read(
     notification_id: int,
+    background_tasks: BackgroundTasks,
     user_id: int = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db)
 ):
@@ -128,6 +156,14 @@ async def mark_as_read(
     notification.read_at = datetime.now(timezone.utc)
     await db.flush()
     await db.refresh(notification)
+
+    # log the read event in background
+    background_tasks.add_task(
+        log_notification_read,
+        notification_id=notification.id,
+        user_id=notification.user_id
+    )
+
     return notification
 
 
