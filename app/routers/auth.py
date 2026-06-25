@@ -28,7 +28,7 @@ async def register(
     if result.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Email already taken'
+            detail='Email already registered'
         )
     
     # check username is not already taken
@@ -39,7 +39,7 @@ async def register(
     if result.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='User already taken'
+            detail='Username already taken'
         )
     
     # hash the password - never store plain text

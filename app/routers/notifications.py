@@ -82,7 +82,7 @@ async def list_notification(
     )
     # add optional filters
     if unread_only:
-        query = query.where(not Notification.is_read)
+        query = query.where(Notification.is_read.is_(False))
     
     if notification_type:
         query = query.where(Notification.notification_type == notification_type)
@@ -101,14 +101,14 @@ async def unread_count(
         select(func.count(Notification.id))
         .where(
             Notification.user_id == user_id,
-            not Notification.is_read
+            Notification.is_read.is_(False)
         )
     )
     count = result.scalar()
     return UnreadCountResponse(count=count, user_id=user_id)
 
 
-@router.get('/notification_id', response_model=NotificationResponse)
+@router.get('/{notification_id}', response_model=NotificationResponse)
 async def get_notification(
     notification_id: int,
     user_id: int = Depends(get_current_user_id),
@@ -167,7 +167,7 @@ async def mark_as_read(
     return notification
 
 
-@router.patch('/mark-all-read', response_model=dict)
+@router.patch('/read-all', response_model=dict)
 async def mark_all_read(
     user_id: int = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db)
@@ -180,7 +180,7 @@ async def mark_all_read(
         update(Notification)
         .where(
             Notification.user_id == user_id,
-            not Notification.is_read
+            Notification.is_read.is_(False)
         )
         .values(
             is_read=True,

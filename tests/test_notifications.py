@@ -292,7 +292,7 @@ class TestMarkAllRead:
             })
 
         response = await client.patch(
-            '/notifications/mark-all-read',
+            '/notifications/read-all',
             headers=auth_headers
         )
 
