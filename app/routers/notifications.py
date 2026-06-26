@@ -5,7 +5,6 @@ from sqlalchemy import select, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timezone
 from app.database import get_db
-from typing import Optional
 from app.models import Notification
 from app.schemas import (
     NotificationCreate,
@@ -23,11 +22,11 @@ from app.tasks import (
 )
 
 
-
 router = APIRouter(
     prefix='/notifications',
     tags=['Notifications']
 )
+
 
 @router.post('/', response_model=NotificationResponse, status_code=201)
 async def create_notification(
@@ -41,8 +40,8 @@ async def create_notification(
     """
     notification = Notification(**payload.model_dump())
     db.add(notification)
-    await db.flush() # assign ID without committing
-    await db.refresh(notification) # loads DB-generated values
+    await db.flush()  # assign ID without committing
+    await db.refresh(notification)  # loads DB-generated values
 
     # prepare notification data for websocket push
     notification_data = {
@@ -102,10 +101,10 @@ async def list_notification(
     # add optional filters
     if unread_only:
         query = query.where(Notification.is_read.is_(False))
-    
+
     if notification_type:
         query = query.where(Notification.notification_type == notification_type)
-    
+
     result = await db.execute(query)
     return result.scalars().all()
 

@@ -1,7 +1,5 @@
 import logging
 from datetime import datetime, timezone
-import asyncio
-
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +40,7 @@ def log_notification_read(notification_id: int, user_id: int) -> None:
         f"at={datetime.now(timezone.utc).isoformat()}"
     )
 
-    
+
 async def push_websocket_notification(user_id: int, notification_data: dict) -> None:
     """
     Push a real-time notifiation to the user via ws

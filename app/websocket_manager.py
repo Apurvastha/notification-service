@@ -18,7 +18,6 @@ class ConnectionManager:
         # dict - one user can connect from multiple devices/tabs\
         self.active_connections: Dict[int, List[WebSocket]] = {}
 
-    
     async def connect(self, websocket: WebSocket, user_id: int):
         """
         Accept a new websocket connection and register it
@@ -47,7 +46,7 @@ class ConnectionManager:
             f"[WS] user_id={user_id} disconnected. "
             f"Active users: {len(self.active_connections)}"
         )
-    
+
     async def send_to_user(self, user_id: int, message: dict):
         """
         Send a json message to all connections for a specific user.
@@ -67,7 +66,6 @@ class ConnectionManager:
                 logger.warning(f"[WS] failed to send to user_id={user_id}: {e}")
                 disconnected.append(websocket)
 
-        
         # clean up any dead connections
         for ws in disconnected:
             self.active_connections[user_id].remove(ws)
@@ -84,18 +82,16 @@ class ConnectionManager:
                 except Exception:
                     pass
 
-    
     @property
     def connected_user_count(self) -> int:
         # number of unique users currently connected
         return len(self.active_connections)
-    
 
     @property
     def total_connection_count(self) -> int:
         # total WS connections count(multiple per user possible)
         return sum(len(conns) for conns in self.active_connections.values())
-    
+
 
 # single instance shared across entire app
 # in prod with multiple servers you user redis pub/sub

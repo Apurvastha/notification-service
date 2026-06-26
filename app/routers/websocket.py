@@ -1,5 +1,5 @@
-import logging 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query, HTTPException
+import logging
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
 from app.websocket_manager import manager
 from app.auth import decode_access_token
 
@@ -7,6 +7,7 @@ from app.auth import decode_access_token
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=['WebSocket'])
+
 
 @router.websocket('/ws/notifications')
 async def websocket_notifications(
@@ -39,7 +40,7 @@ async def websocket_notifications(
         # reject connection with 4001 (custom code -auth failed)
         await websocket.close(code=4001, reason='Invalid or expired token')
         return
-    
+
     user_id = payload.get('user_id')
     if not user_id:
         await websocket.close(code=4001, reason='Invalid token payload')
@@ -68,7 +69,7 @@ async def websocket_notifications(
             # respond to ping with pong
             if data == 'ping':
                 await websocket.send_json({'type': 'pong'})
-    
+
     except WebSocketDisconnect:
         # cleimt disconnected - clean uo
         manager.disconnect(websocket, user_id)

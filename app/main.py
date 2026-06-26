@@ -11,14 +11,12 @@ import logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s %(levelname)s %(name)s %(message)s',
-    )
-
-
+)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-   
+
     # Alembic handles schema
     yield
     # shutdown - close connections
@@ -48,9 +46,11 @@ app.include_router(auth.router)
 app.include_router(notifications.router)
 app.include_router(websocket_router)
 
+
 @app.get('/health')
 async def health():
     return {'status': 'ok', 'service': settings.APP_NAME}
+
 
 @app.get('/ws/stats')
 async def websocket_stats():

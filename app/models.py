@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import String, Integer, Boolean, DateTime, ForeignKey, Text, JSON
+from sqlalchemy import String, Integer, Boolean, DateTime, Text, JSON
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 from app.database import Base
@@ -18,10 +18,9 @@ class User(Base):
         server_default=func.now()
     )
 
-   
 
 class Notification(Base):
-    __tablename__= 'notifications'
+    __tablename__ = 'notifications'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     user_id: Mapped[int] = mapped_column(Integer, index=True, nullable=False)

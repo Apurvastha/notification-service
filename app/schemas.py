@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Optional, Any
 
 
-#---- Auth Schemas --------------------------------------------------------------------------------------------------------
+# ---- Auth Schema---------------------------------------------------------------
 
 class UserRegister(BaseModel):
     email: EmailStr
@@ -30,9 +30,8 @@ class LoginRequest(BaseModel):
     username: str
     password: str
 
-    
 
-#---- Notification Schemas----------------------------------------------------------------------------------------------------
+# ---- Notification Schemas--------------------------------------------------------
 class NotificationCreate(BaseModel):
     """Schema for creating a notification - what the client sends."""
     user_id: int
@@ -57,6 +56,7 @@ class NotificationResponse(BaseModel):
     model_config = {'from_attributes': True}
     # from_attibutes=true lets pydantic read from SQLAlchemy model instance
     # equivalent to Django serializer source = parameter
+
 
 class NotificationUpdate(BaseModel):
     """Schema for marking as read."""
