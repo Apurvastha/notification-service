@@ -18,7 +18,8 @@ from app.dependencies import get_current_user_id
 from app.tasks import (
     log_notification_created,
     log_notification_read,
-    simulate_push_notification
+    simulate_push_notification,
+    push_websocket_notification
 )
 
 
@@ -43,7 +44,18 @@ async def create_notification(
     await db.flush() # assign ID without committing
     await db.refresh(notification) # loads DB-generated values
 
-    # these run after the response is sent
+    # prepare notification data for websocket push
+    notification_data = {
+        'id': notification.id,
+        'user_id': notification.user_id,
+        'title': notification.title,
+        'message': notification.message,
+        'notification_type': notification.notification_type,
+        'is_read': notification.is_read,
+        'created_at': notification.created_at.isoformat()
+    }
+
+    # fire all background tasks after response is sent
     background_tasks.add_task(
         log_notification_created,
         notification_id=notification.id,
@@ -55,6 +67,13 @@ async def create_notification(
         user_id=notification.user_id,
         title=notification.title,
         message=notification.message
+    )
+
+    # push real-time websocket notification
+    background_tasks.add_task(
+        push_websocket_notification,
+        user_id=notification.user_id,
+        notification_data=notification_data
     )
 
     return notification

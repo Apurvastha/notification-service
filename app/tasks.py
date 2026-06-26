@@ -1,5 +1,7 @@
 import logging
 from datetime import datetime, timezone
+import asyncio
+
 
 logger = logging.getLogger(__name__)
 
@@ -41,3 +43,17 @@ def log_notification_read(notification_id: int, user_id: int) -> None:
     )
 
     
+async def push_websocket_notification(user_id: int, notification_data: dict) -> None:
+    """
+    Push a real-time notifiation to the user via ws
+    runs as a background task after the http response is sent
+    """
+    from app.websocket_manager import manager
+
+    await manager.send_to_user(
+        user_id=user_id,
+        message={
+            'type': 'new_notification',
+            'data': notification_data
+        }
+    )

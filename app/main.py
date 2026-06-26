@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from app.config import settings
 from app.database import engine
 from app.routers import notifications, auth
+from app.routers.websocket import router as websocket_router
 from app.middleware import RequestLoggingMiddleware, AuditMiddleware
 import logging
 
@@ -45,7 +46,17 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(notifications.router)
+app.include_router(websocket_router)
 
 @app.get('/health')
 async def health():
     return {'status': 'ok', 'service': settings.APP_NAME}
+
+@app.get('/ws/stats')
+async def websocket_stats():
+    """Shows how many users are connected via websocket"""
+    from app.websocket_manager import manager
+    return {
+        'connected_user:': manager.connected_user_count,
+        'total_connections': manager.total_connection_count
+    }
