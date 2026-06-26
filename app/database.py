@@ -3,12 +3,15 @@ from sqlalchemy.orm import DeclarativeBase
 from app.config import settings
 
 
+is_sqlite = settings.DATABASE_URL.startswith('sqlite')
 # async engine - non-blocking DB connections
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.DEBUG,  # logs sql when debug=true
-    pool_size=10,
-    max_overflow=20,
+    **({} if is_sqlite else {
+        'pool_size': 10,
+        'max_overflow': 20,
+    })
 )
 
 # session factory
