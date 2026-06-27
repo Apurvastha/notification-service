@@ -3,8 +3,8 @@
 A FastAPI microservice for real-time notifications — built as a companion service to the [JobBoard API](https://github.com/Apurvastha/jobboard).
 
 ## Live Demo
-
-> Deployment coming on Day 7 — Railway
+![CI](https://github.com/Apurvastha/notification-service/actions/workflows/ci.yml/badge.svg)
+> [Notification-Service](https://notification-service-production-ae8f.up.railway.app/docs)
 
 ---
 
@@ -36,9 +36,9 @@ A FastAPI microservice for real-time notifications — built as a companion serv
 - [x] Dependency injection via Depends()
 - [x] CORS middleware
 - [x] Health check endpoint
-- [ ] WebSocket real-time push (Day 6)
-- [ ] Background tasks (Day 4)
-- [ ] Docker + Railway deployment (Day 7)
+- [x] WebSocket real-time push
+- [x] Background tasks
+- [x] Docker + Railway deployment
 
 ---
 
@@ -47,24 +47,41 @@ A FastAPI microservice for real-time notifications — built as a companion serv
 ```
 notification-service/
 ├── app/
-│   ├── main.py           # FastAPI app, routers, lifespan
-│   ├── config.py         # Pydantic settings — reads from .env
-│   ├── database.py       # Async SQLAlchemy engine + session
-│   ├── models.py         # SQLAlchemy models (User, Notification)
-│   ├── schemas.py        # Pydantic schemas — request/response
-│   ├── auth.py           # Password hashing + JWT utilities
-│   ├── dependencies.py   # Shared dependencies (get_current_user)
+│   ├── main.py               # FastAPI app, routers, lifespan
+│   ├── config.py             # Pydantic settings — reads from .env
+│   ├── database.py           # Async SQLAlchemy engine + session
+│   ├── models.py             # SQLAlchemy models (User, Notification)
+│   ├── schemas.py            # Pydantic schemas — request/response
+│   ├── auth.py               # Password hashing + JWT utilities
+│   ├── dependencies.py       # Shared dependencies (get_current_user)
+│   ├── middleware.py         # Custom middleware(Audit, Response time)
+│   ├── tasks.py              # Background tasks
+│   ├── test_config.py        # Pytest config
+│   ├── websocket_manager.py  # Websocket connection
 │   └── routers/
-│       ├── auth.py       # POST /auth/register, /auth/token, /auth/me
+│       ├── auth.py           # POST /auth/register, /auth/token, /auth/me
 │       └── notifications.py  # CRUD notification endpoints
+│       └── websocket.py      # websocket endpoints
 ├── alembic/              # Alembic migration config
 │   ├── env.py
 │   └── versions/         # Migration files
 ├── tests/
+│   └── __init__.py
+│   └── conftest.py
+│   └── test_auth.py
+│   └── test_middleware.py
 │   └── test_notifications.py
 ├── .env.example
 ├── requirements.txt
-└── Dockerfile            # coming Day 7
+├── docker-compose.yml
+├── pytest.ini
+├── railway.toml
+├── Dockerfile
+├── .gitignore
+├── .dockerignore
+└── README.md          
+           
+            
 ```
 
 ---
@@ -106,9 +123,8 @@ uvicorn app.main:app --reload --port 8001
 ```
 
 Visit:
-- Swagger UI: http://127.0.0.1:8001/docs
-- ReDoc: http://127.0.0.1:8001/redoc
-- Health: http://127.0.0.1:8001/health
+- Swagger UI: http://localhost:8001/docs
+- Health: http://localhost:8001/health
 
 ---
 
@@ -133,23 +149,23 @@ Authentication
   GET   /auth/me                    # current user info (requires auth)
 
 Notifications
-  POST  /notifications/             # create notification (service-to-service)
-  GET   /notifications/             # list user's notifications (requires auth)
-  GET   /notifications/unread-count # count unread (requires auth)
-  GET   /notifications/{id}         # get single notification (requires auth)
-  PATCH /notifications/{id}/read    # mark as read (requires auth)
-  PATCH /notifications/mark-all-read # mark all as read (requires auth)
-  DELETE /notifications/{id}        # delete notification (requires auth)
+  POST  /notifications/                          # create notification (service-to-service)
+  GET   /notifications/                          # list user's notifications (requires auth)
+  GET   /notifications/unread-count              # count unread (requires auth)
+  GET   /notifications/{notification_id}         # get single notification (requires auth)
+  PATCH /notifications/{notification_id}/read    # mark as read (requires auth)
+  PATCH /notifications/read-all                  # mark all as read (requires auth)
+  DELETE /notifications/{id}                     # delete notification (requires auth)
 
 System
-  GET   /health                     # health check
+  GET   /health                                  # health check
 ```
 
 ---
 
 ## Quick Start (Swagger UI)
 
-1. Open http://127.0.0.1:8001/docs
+1. Open https://notification-service-production-ae8f.up.railway.app/docs
 2. `POST /auth/register` with email, username, password
 3. `POST /auth/token` with username and password
 4. Click **Authorize** → paste the `access_token`
@@ -206,7 +222,7 @@ JobBoard API (Django)
     ↓ POST /notifications/ (internal call)
 Notification Service (FastAPI)
     ↓ stores in PostgreSQL
-    ↓ pushes via WebSocket (Day 6)
+    ↓ pushes via WebSocket 
 Frontend / Mobile client
 ```
 
@@ -219,13 +235,5 @@ JobBoard calls `POST /notifications/` when:
 
 ## Project Status
 
-Actively in development — Week 6 of backend engineering roadmap.
+Actively in development
 
-**Roadmap:**
-- [x] Day 1: FastAPI setup, async SQLAlchemy, Pydantic
-- [x] Day 2: Alembic migrations, query patterns, bulk operations
-- [x] Day 3: JWT auth, bcrypt, protected endpoints
-- [ ] Day 4: Background tasks, middleware
-- [ ] Day 5: pytest + httpx testing
-- [ ] Day 6: WebSocket real-time push
-- [ ] Day 7: Docker + Railway deployment
