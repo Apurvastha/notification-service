@@ -38,11 +38,14 @@ async def websocket_notifications(
 
     if not payload:
         # reject connection with 4001 (custom code -auth failed)
+        await websocket.accept()
         await websocket.close(code=4001, reason='Invalid or expired token')
+        logger.error("[WS] Token rejected - could not decode")
         return
 
     user_id = int(payload.get('user_id'))
     if not user_id:
+        await websocket.accept()
         await websocket.close(code=4001, reason='Invalid token payload')
         return
 

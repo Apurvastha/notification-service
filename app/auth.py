@@ -3,6 +3,9 @@ from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from app.config import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # password hashing context - uses bcrypt algorith
@@ -59,5 +62,6 @@ def decode_access_token(token: str) -> Optional[dict]:
             algorithms=[settings.ALGORITHM]
         )
         return payload
-    except JWTError:
+    except JWTError as e:
+        logger.error(f"JWT decode failed: {e}")
         return None
