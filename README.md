@@ -225,8 +225,7 @@ Notification Service (FastAPI)
     ↓ pushes via WebSocket 
 Frontend / Mobile client
 ```
-
-JobBoard calls `POST /notifications/` when:
+Intended integration — JobBoard would call `POST /notifications/` when:
 - A candidate applies to a job → notify the company
 - A company changes application status → notify the candidate
 - A new job matches a candidate's profile → notify the candidate

@@ -41,7 +41,7 @@ async def websocket_notifications(
         await websocket.close(code=4001, reason='Invalid or expired token')
         return
 
-    user_id = payload.get('user_id')
+    user_id = int(payload.get('user_id'))
     if not user_id:
         await websocket.close(code=4001, reason='Invalid token payload')
         return
