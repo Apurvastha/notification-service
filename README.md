@@ -3,7 +3,7 @@
 A FastAPI microservice for real-time notifications — built as a companion service to the [JobBoard API](https://github.com/Apurvastha/jobboard).
 
 ## Live Demo
-![CI](https://github.com/Apurvastha/notification-service/actions/workflows/ci.yml/badge.svg)
+[![CI](https://github.com/Apurvastha/notification-service/actions/workflows/ci.yml/badge.svg)](https://github.com/Apurvastha/notification-service/actions/workflows/ci.yml)
 > [Notification-Service](https://notification-service-production-ae8f.up.railway.app/docs)
 
 ---
@@ -215,21 +215,31 @@ alembic current
 
 ## Architecture
 
-This service is designed as a microservice companion to JobBoard:
+This service is the real-time delivery layer for [JobBoard](https://github.com/Apurvastha/jobboard).
+Company changes application status in JobBoard
 
 ```
-JobBoard API (Django)
-    ↓ POST /notifications/ (internal call)
-Notification Service (FastAPI)
-    ↓ stores in PostgreSQL
-    ↓ pushes via WebSocket 
-Frontend / Mobile client
-```
-Intended integration — JobBoard would call `POST /notifications/` when:
-- A candidate applies to a job → notify the company
-- A company changes application status → notify the candidate
-- A new job matches a candidate's profile → notify the candidate
+→ Django signal detects old vs new status
 
+→ Celery fires POST /notifications/ to this service
+
+→ Notification stored in PostgreSQL
+
+→ WebSocket push to candidate's active connection
+
+→ Candidate sees update instantly without refreshing
+```
+
+**Shared JWT** — both services use the same signing secret. A token issued by JobBoard is valid here. Candidates connect to the WebSocket using their JobBoard token — no separate registration required.
+
+## Quick Start with JobBoard
+
+1. Login to [JobBoard](https://jobboard-production-aae7.up.railway.app/api/schema/swagger-ui/) and get your access token
+2. Connect WebSocket using that token:
+```bash
+wscat -c "wss://notification-service-production-ae8f.up.railway.app/ws/notifications?token=<your_jobboard_token>"
+```
+3. Trigger a status change in JobBoard — notification arrives in real time
 ---
 
 ## Project Status
